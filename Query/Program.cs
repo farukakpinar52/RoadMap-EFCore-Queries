@@ -289,6 +289,174 @@ ETicaretDbContext context = new ETicaretDbContext();
 
 #endregion
 
+#region Diğer sorgulama fonksiyonları
+//BU FONKSIYONLARDA ŞARTLARI WHERE İLE OLUŞTURDUKTAN SONRA BU FONKSIYONLARI ÇAĞIRMAK YERİNE, ŞART CÜMLELERİNİ DİREK BU FONKSİYONLARIN İÇİNDE VEREBLİLİRİZ.
+
+
+#region CountAsync
+//varolan bir sorgunun execute neticesinde kaç adet olacağını geri döndürür
+//şimdi yanlış bir yöntem ile başlayalım bu maliyetli bir hesaplama oldu.
+//int adet = (await context.Set<Urun>().ToListAsync()).Count();
+
+//IQueryable kısmında sayarak sorgu execute edilmeden adedi bulabiliriz.
+//int adet2 = await context.Set<Urun>().CountAsync();
+
+//int adet2 = await context.Set<Urun>().CountAsync(u=>u.UrunAdi.Contains("A"));
+//Console.WriteLine( "bu countasync fonksiyonu sonucu "+adet2.ToString());
+
+#endregion
+
+#region LongCountAsync
+//CountAsync int olduğu için 2.4milyar veriyi okur o yüzden 10 milyar veri falan varsa bu fonksiyon çalıştırılır
+//long adet2 = await context.Set<Urun>().LongCountAsync();
+
+#region -------Şartlı sorgu sayısı elde etmek
+//long adet2 = await context.Set<Urun>().LongCountAsync(u => u.Fiyat<500);
+
+#endregion
+
+#endregion
+
+#region AnyAsync
+//Sorgu neticesinde AnyAsync ile verinin gelip gelmediğini bool olarak verir
+//bool urunVarMı = await context.Set<Urun>().Where(u=>u.Fiyat==444).AnyAsync();
+
+//bool urunVarMı = await context.Set<Urun>().Where(u => u.UrunAdi.Contains("A")).AnyAsync();
+//bool urunVarMı2 = await context.Set<Urun>().AnyAsync(u => u.UrunAdi.Contains("A"));
+
+//Console.WriteLine(urunVarMı);
+//Console.WriteLine(urunVarMı2);
+
+#endregion
+
+#region MaxAsync
+//sorguda dönen sayısal veriler arasındaki en büyük değeri getirir
+//var maxFiyat = await context.Set<Urun>().MaxAsync(u=>u.Fiyat);
+//Console.WriteLine(maxFiyat.ToString());
+#endregion
+
+#region MinAsync
+//gelen sorgudaki en küçük değeri verir
+//var maxFiyat2 = await context.Set<Urun>().MinAsync(u => u.Fiyat);
+//Console.WriteLine(maxFiyat2.ToString());
+#endregion
+
+#region Distinct
+//sorguda mükerrer kayıtlar varsa bunları tekilleştiren bir işleve sahip fonksiyonlardır
+//distinct sorguyu execute etmez o yüzden tolistasync ile çalışırız.
+//var urunler = await context.Set<Urun>().Distinct().ToListAsync();
+#endregion
+
+#region AllAsync
+//bir sorgu neticesinde gelen verilerin TAMAMI şartı sağlıyorsa True döner, değilse false.
+//bool a1 = await context.Set<Urun>().AllAsync(u=>u.Fiyat<5000);
+//bool a2 = await context.Set<Urun>().AllAsync(u => u.UrunAdi.Contains("a"));
+
+//Console.WriteLine(a1);
+//Console.WriteLine(a2);
+
+#endregion
+
+#region SumAsync
+//Toplamı veren fonksiyondur sayısal kolonda çalışır
+//var toplamFiyat = await context.Set<Urun>().SumAsync(u=>u.Fiyat);
+
+#endregion
+
+#region AverageAsync
+//sayısal değer içeren kolonda ortalamayı verir
+//float ortalamaFiyat = await context.Set<Urun>().AverageAsync(u => u.Fiyat);
+
+#endregion
+
+#region ContainsAsync
+//Like '%...%'  şeklindeki like sorgusu oluşturmamızı sağlar
+//sql de sorgu yazarken  ... where KolonAdı Like '%abc%' şeklinde olduğu için where şartından sonra gelir
+//List<Urun> urunHasAWord = await context.Set<Urun>().Where(u=>u.UrunAdi.Contains("A")).ToListAsync();
+
+#endregion
+
+#region StartsWith
+//Like sorgusu oluşturmamızı sağlar '...%' şeklindeki sorguları getirir
+//List<Urun> urunStartAWord = await context.Set<Urun>().Where(u => u.UrunAdi.StartsWith("A")).ToListAsync();
+//foreach (var item in urunStartAWord)
+//{
+//    Console.WriteLine(  item.UrunAdi);
+//}
+
+#endregion
+
+#region EndsWith
+//Like sorgusu oluşturmamızı sağlar '%...' şeklindeki sorguları getirir
+//List<Urun> urunStartAWord = await context.Set<Urun>().Where(u => u.UrunAdi.EndsWith("A")).ToListAsync();
+//foreach (var item in urunStartAWord)
+//{
+//    Console.WriteLine(item.UrunAdi);
+//}
+#endregion
+#endregion
+
+#region SORGU SONUCU ELDE EDİLEN VERİLERİ FARKLI TÜRLERE(ToDictionary, ToArray, Select, SelectMany) DÖNÜŞTÜRMEK
+//bu fonksiyonlar ile sorgu neticesinde elde edilen verilerin istediğimiz kolonlarını çekerek farklı türlerde projeksiyon edebiliyoruz
+
+#region a.ToDictionaryAsync
+//sorgu neticesinde gelecek olan veriyi bir dictionary olarak elde etmek/karşılamak istiyorsak kullanırız
+//var mydic = await context.Set<Urun>().ToDictionaryAsync(u=>u.UrunAdi,u=>u.Fiyat);
+
+//oluşturulan sorguyu ToListAsync gibi execute eder fakat 
+//ToList : entity türünde bir koleksiyondur List<TEntity> döndürür
+//ToDictionary : dictionary türünden bir koleksiyondur Dictionary<Key,Value>
+#endregion
+
+#region b.ToArrayAsync
+//query'yi execute eder ama gelen verileri Array(dizi) içinde tutar.
+//Urun[] myArr = await context.Set<Urun>().ToArrayAsync();
+
+#endregion
+
+#region c.Select
+//işlevsel olarak birden fazla davranışı vardır
+//1. generate edilecek fonksiyonun çekilecek olan kolonlarını ayarlamayı sağlar
+//var urunler1 = await context.Set<Urun>().Select(u=> new Urun { Id=u.Id, Fiyat=u.Fiyat}).ToListAsync();
+
+//2. generate edilecek fonksiyonun çekilecek olan kolonlarına özel bir anonim nesne üreterek çağırabilir
+//var urunler2 = await context.Set<Urun>().Select(u => new { Id = u.Id, Fiyat = u.Fiyat }).ToListAsync();
+
+//3. çekilecek olan verinin kolonlarını karşılayacak bir sınıfımız varsa o türden karşılayabiliriz
+//burada sanki UrunDetay isimli id ve fiyat prop'larına sahip bir sınıfımız var gibi düşündük
+//var urunler3 = await context.Set<Urun>().Select(u => new UrunDetay{ Id = u.Id, Fiyat = u.Fiyat }).ToListAsync();
+
+
+#endregion
+
+#region d.SelectMany
+//ilgili tablonun içinde ilişkisel veriyi (bire çok) barındıran bir ilişki olabilir
+//bu ilişkiye ait kolonlar çekmek için SelectMany kullanırız
+//ilişkisel tablolar neticesinde gelen koleksiyonel verileri de tekilleştirip projeksiyon eder
+var urunler = await context.Set<Urun>().Include(u=> u.Parcalar).SelectMany(u=>u.Parcalar, (u, p) => new
+{
+    u.Id,
+    u.UrunAdi,
+    p.ParcaAdi
+}).ToListAsync();
+#endregion
+
+
+
+
+
+
+
+
+#endregion
+
+#region GROUPBY FONKSIYONU
+
+#endregion
+
+#region FOREACH FONKSIYONU
+
+#endregion
 
 
 public class ETicaretDbContext : DbContext

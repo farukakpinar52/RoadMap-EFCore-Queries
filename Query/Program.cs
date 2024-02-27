@@ -433,7 +433,7 @@ ETicaretDbContext context = new ETicaretDbContext();
 //ilgili tablonun içinde ilişkisel veriyi (bire çok) barındıran bir ilişki olabilir
 //bu ilişkiye ait kolonlar çekmek için SelectMany kullanırız
 //ilişkisel tablolar neticesinde gelen koleksiyonel verileri de tekilleştirip projeksiyon eder
-var urunler = await context.Set<Urun>().Include(u=> u.Parcalar).SelectMany(u=>u.Parcalar, (u, p) => new
+var urunler = await context.Set<Urun>().Include(u => u.Parcalar).SelectMany(u => u.Parcalar, (u, p) => new
 {
     u.Id,
     u.UrunAdi,
@@ -443,18 +443,53 @@ var urunler = await context.Set<Urun>().Include(u=> u.Parcalar).SelectMany(u=>u.
 
 
 
-
-
-
-
-
 #endregion
 
 #region GROUPBY FONKSIYONU
+//çok satırlı verileri aggregate fonksiyonlar ile gruplama yapmamızı sağlar
+//gelen veriler istatiksel olduğu için gelen veriyi datas 'a atarız.
+#region a.method syntax
+//var datas = context.Set<Urun>().GroupBy(u => u.Fiyat).Select(group => new
+//{
+//    Count = group.Count(),
+//    Fiyat = group.Key
+//}).ToListAsync();
 
 #endregion
+#region b.query syntax
+//var datas = await (from urun in context.Set<Urun>()
+//            group urun by urun.Fiyat
+//            into gruplananFiyat //gruplamaya isim veriyoruz
+//            select new
+//            {
+//                Fiyat = gruplananFiyat.Key,
+//                Count = gruplananFiyat.Count()
+//            }).ToListAsync();
 
-#region FOREACH FONKSIYONU
+#endregion
+#endregion
+
+#region FOREACH FONKSIYONU (bir sorgulama fonksiyonu değildir.)
+//çoğul veri getiren fonksiyonlardan sonra veri üzerinde iterasyonal olarak dönmemizi sağlar. Foreach döngüsünün method halidir.
+//var datas = await (from urun in context.Set<Urun>()
+//                   group urun by urun.Fiyat
+//                   into gruplananFiyat //gruplamaya isim veriyoruz
+//                   orderby gruplananFiyat.Key descending //burdaki grup adının Key'i yani anahtarı urun.Fiyat 'tan geliyor
+//                   select new
+//                   {
+//                       Fiyat = gruplananFiyat.Key,
+//                       Count = gruplananFiyat.Count()
+//                   }).ToListAsync();
+//foreach (var data in datas)
+//{
+//    //1.veri içinde dönme yöntemi
+//}
+
+//datas.ForEach(x =>
+//{  //2.veri içinde dönme yöntemi
+//    Console.WriteLine("Ürün adedi : "+x.Count +" Fiyatı : " + x.Fiyat.ToString());
+//});
+
 
 #endregion
 
@@ -472,12 +507,12 @@ public class ETicaretDbContext : DbContext
     {
 
         optionsBuilder.UseSqlServer("Server=DESKTOP-P7KA77K\\SQLEXPRESS;Database=QueriesDB;User Id=sa;Password=1234; ;TrustServerCertificate=true");
-        
+
 
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<UrunParca>().HasKey(up => new {up.UrunId,up.ParcaId });
+        modelBuilder.Entity<UrunParca>().HasKey(up => new { up.UrunId, up.ParcaId });
     }
 
 }
